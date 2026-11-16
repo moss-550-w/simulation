@@ -4,6 +4,10 @@
 
 本系统采用平均应力解析公式，不是有限元仿真软件，不输出应力云图或精确接触应力分布。
 
+## 在线访问
+
+[https://moss-550-w.github.io/simulation/](https://moss-550-w.github.io/simulation/)
+
 ## 功能特性
 
 - 支持普通平键 A 型（圆头）、B 型（方头）和 C 型（单圆头）。
