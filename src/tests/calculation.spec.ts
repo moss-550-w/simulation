@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateKeyStrength } from '../domain/calculation';
+import { TEXTBOOK_EXAMPLE } from '../domain/examples';
 import { newtonMeterToNewtonMillimeter, normalizeInputs } from '../domain/normalize';
 import type { NormalizedInputs, RawInputs } from '../domain/types';
 
@@ -54,6 +55,17 @@ describe('平键强度计算', () => {
     expect(result.etaP).toBeCloseTo(0.5882352941, 9);
     expect(result.Sp).toBeCloseTo(1.7, 9);
     expect(result.status).toBe('safe');
+  });
+
+  it('内置教材例题与标准答案的误差小于 0.1%', () => {
+    const result = calculateKeyStrength(normalizeInputs(TEXTBOOK_EXAMPLE.inputs));
+    const expected = TEXTBOOK_EXAMPLE.expected;
+    expect(result.l).toBe(expected.l);
+    expect(result.hk).toBe(expected.hk);
+    expect(Math.abs(result.sigmaP - expected.sigmaP) / expected.sigmaP).toBeLessThan(0.001);
+    expect(Math.abs((result.tau ?? 0) - expected.tau) / expected.tau).toBeLessThan(0.001);
+    expect(Math.abs(result.etaP - expected.etaP) / expected.etaP).toBeLessThan(0.001);
+    expect(result.Sp).toBeCloseTo(expected.Sp, 9);
   });
 
   it('T=0 时返回 noLoad，安全系数为 null', () => {

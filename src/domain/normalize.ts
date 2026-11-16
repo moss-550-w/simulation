@@ -10,6 +10,10 @@ export function newtonMeterToNewtonMillimeter(value: number): number {
   return value * 1000;
 }
 
+export function newtonMillimeterToNewtonMeter(value: number): number {
+  return value / 1000;
+}
+
 export function parseFiniteNumber(value: string | undefined): number | null {
   if (value === undefined || value.trim() === '') {
     return null;

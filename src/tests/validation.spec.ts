@@ -1,4 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import {
+  INPUT_TRANSFER_KIND,
+  INPUT_TRANSFER_VERSION,
+  parseInputPayload,
+  parseRawInputsValue,
+  serializeInputPayload,
+} from '../domain/inputTransfer';
 import { hasValidationErrors, validateInputs } from '../domain/validation';
 import type { RawInputs } from '../domain/types';
 
@@ -85,5 +92,28 @@ describe('输入校验', () => {
   it('错误集合可统一判断是否有效', () => {
     expect(hasValidationErrors({})).toBe(false);
     expect(hasValidationErrors(validateInputs(validRaw({ d: '' })))).toBe(true);
+  });
+});
+
+describe('JSON 参数恢复校验', () => {
+  it('有效参数可完整序列化并往返恢复', () => {
+    const inputs = validRaw({ enableShear: true, tauAllow: '60', sigmaPKey: '90' });
+    const parsed = parseInputPayload(serializeInputPayload(inputs));
+    expect(parsed).toEqual({ success: true, inputs });
+  });
+
+  it('拒绝错误 JSON、版本和数据类型', () => {
+    expect(parseInputPayload('{broken').success).toBe(false);
+    expect(parseInputPayload(JSON.stringify({ version: 99, kind: INPUT_TRANSFER_KIND })).success).toBe(false);
+    expect(parseInputPayload(JSON.stringify({ version: INPUT_TRANSFER_VERSION, kind: 'other' })).success).toBe(false);
+  });
+
+  it('拒绝缺字段、错误字段类型和非法几何参数', () => {
+    expect(parseRawInputsValue({ ...validRaw(), d: 50 })).toBeNull();
+    expect(parseRawInputsValue({ ...validRaw(), type: 'D' })).toBeNull();
+    expect(parseRawInputsValue({ ...validRaw(), D: '40' })).toBeNull();
+    const missing = validRaw() as Partial<RawInputs>;
+    delete missing.L;
+    expect(parseRawInputsValue(missing)).toBeNull();
   });
 });

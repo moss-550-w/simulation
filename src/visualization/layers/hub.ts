@@ -8,23 +8,19 @@ export function drawHub(
   longitudinal: LongitudinalSectionModel,
 ): void {
   layer.destroyChildren();
-  const ring = new Konva.Shape({
+  const circlePath = (radius: number): string => [
+    `M ${cross.cx - radius} ${cross.cy}`,
+    `A ${radius} ${radius} 0 1 0 ${cross.cx + radius} ${cross.cy}`,
+    `A ${radius} ${radius} 0 1 0 ${cross.cx - radius} ${cross.cy}`,
+    'Z',
+  ].join(' ');
+  const slotPath = `M ${cross.keyLeft - 1} ${cross.hubSlotTop} H ${cross.keyRight + 1} V ${cross.shaftTop + 1} H ${cross.keyLeft - 1} Z`;
+  const ring = new Konva.Path({
+    data: `${circlePath(cross.hubRadius)} ${circlePath(cross.shaftRadius)} ${slotPath}`,
     fill: '#e7edf0',
+    fillRule: 'evenodd',
     stroke: '#607d8b',
     strokeWidth: 1.3,
-    sceneFunc(context) {
-      context.beginPath();
-      context.arc(cross.cx, cross.cy, cross.hubRadius, 0, Math.PI * 2, false);
-      context.arc(cross.cx, cross.cy, cross.shaftRadius, 0, Math.PI * 2, true);
-      context.rect(
-        cross.keyLeft - 1,
-        cross.hubSlotTop,
-        cross.keyWidth + 2,
-        Math.max(1, cross.shaftTop - cross.hubSlotTop + 1),
-      );
-      context.fill('evenodd');
-      context.stroke();
-    },
   });
   ring.setAttr('hint', `轮毂：外径 D = ${cross.input.D} mm，长度 Bh = ${cross.input.Bh} mm`);
   layer.add(ring);

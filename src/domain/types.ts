@@ -80,3 +80,8 @@ export interface StandardKeySize {
   t1: number;
   t2: number;
 }
+
+export interface TrendPoint {
+  x: number;
+  y: number;
+}

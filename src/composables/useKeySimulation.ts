@@ -1,6 +1,14 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { calculateKeyStrength } from '../domain/calculation';
-import { normalizeInputs, parseFiniteNumber } from '../domain/normalize';
+import { TEXTBOOK_EXAMPLE } from '../domain/examples';
+import { parseInputPayload, serializeInputPayload } from '../domain/inputTransfer';
+import { getWorkingLength } from '../domain/keyTypes';
+import {
+  newtonMeterToNewtonMillimeter,
+  newtonMillimeterToNewtonMeter,
+  normalizeInputs,
+  parseFiniteNumber,
+} from '../domain/normalize';
 import { findStandardKey } from '../domain/standardKeys';
 import { hasValidationErrors, validateInputs } from '../domain/validation';
 import type {
@@ -10,6 +18,7 @@ import type {
   NormalizedInputs,
   NumericInputField,
   RawInputs,
+  TrendPoint,
 } from '../domain/types';
 
 export type DimensionMode = 'standard' | 'custom';
@@ -33,13 +42,61 @@ export const DEFAULT_RAW_INPUTS: Readonly<RawInputs> = {
   tauAllow: '60',
 };
 
+const STORAGE_KEY = 'key-strength-checker:inputs:v1';
+const TREND_SAMPLE_COUNT = 24;
+
 function defaultInputs(): RawInputs {
   return { ...DEFAULT_RAW_INPUTS };
 }
 
+function initialInputs(): RawInputs {
+  if (typeof window === 'undefined') {
+    return defaultInputs();
+  }
+  try {
+    const cached = window.localStorage.getItem(STORAGE_KEY);
+    if (cached) {
+      const parsed = parseInputPayload(cached);
+      if (parsed.success) {
+        return parsed.inputs;
+      }
+    }
+  } catch {
+    // 本地存储不可用或数据损坏时使用安全默认参数。
+  }
+  return defaultInputs();
+}
+
+function sampleTorqueTrend(input: NormalizedInputs): TrendPoint[] {
+  const currentTorque = newtonMillimeterToNewtonMeter(input.T);
+  const maximum = Math.max(100, currentTorque * 1.5);
+  return Array.from({ length: TREND_SAMPLE_COUNT + 1 }, (_, index) => {
+    const torque = maximum * index / TREND_SAMPLE_COUNT;
+    const sample = { ...input, T: newtonMeterToNewtonMillimeter(torque) };
+    return { x: torque, y: calculateKeyStrength(sample).sigmaP };
+  });
+}
+
+function sampleLengthTrend(input: NormalizedInputs): TrendPoint[] {
+  const minimum = Math.min(input.L, Math.max(input.L * 0.35, input.b * 0.25));
+  const maximum = Math.min(input.Bh, Math.max(input.L * 1.5, input.L + input.b));
+  const range = Math.max(1, maximum - minimum);
+  const points: TrendPoint[] = [];
+  for (let index = 0; index <= TREND_SAMPLE_COUNT; index += 1) {
+    const length = minimum + range * index / TREND_SAMPLE_COUNT;
+    if (length > input.Bh || getWorkingLength(input.type, length, input.b) <= 0) {
+      continue;
+    }
+    const sample = { ...input, L: length };
+    points.push({ x: length, y: calculateKeyStrength(sample).sigmaP });
+  }
+  return points;
+}
+
 export function useKeySimulation() {
-  const rawInputs = reactive<RawInputs>(defaultInputs());
+  const rawInputs = reactive<RawInputs>(initialInputs());
   const dimensionMode = ref<DimensionMode>('standard');
+  const exampleActive = ref(false);
   const showFormulas = ref(true);
   const showDimensions = ref(true);
 
@@ -58,6 +115,11 @@ export function useKeySimulation() {
     if (result && normalizedInputs.value) {
       lastValidResult.value = result;
       lastValidInputs.value = normalizedInputs.value;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, serializeInputPayload(rawInputs));
+      } catch {
+        // 隐私模式或存储配额不影响校核功能。
+      }
     }
   }, { immediate: true });
 
@@ -74,6 +136,8 @@ export function useKeySimulation() {
   });
   const displayInputs = computed(() => normalizedInputs.value ?? lastValidInputs.value);
   const canvasResult = computed(() => calculatedResult.value ?? lastValidResult.value);
+  const torqueTrend = computed(() => displayInputs.value ? sampleTorqueTrend(displayInputs.value) : []);
+  const lengthTrend = computed(() => displayInputs.value ? sampleLengthTrend(displayInputs.value) : []);
 
   const recommendedKey = computed(() => {
     const diameter = parseFiniteNumber(rawInputs.d);
@@ -81,6 +145,7 @@ export function useKeySimulation() {
   });
 
   function applyRecommendedKey(): void {
+    exampleActive.value = false;
     const recommendation = recommendedKey.value;
     if (!recommendation) {
       return;
@@ -98,18 +163,22 @@ export function useKeySimulation() {
   });
 
   function updateNumericField(field: NumericInputField, value: string): void {
+    exampleActive.value = false;
     rawInputs[field] = value;
   }
 
   function setKeyType(type: KeyType): void {
+    exampleActive.value = false;
     rawInputs.type = type;
   }
 
   function setEnableShear(enabled: boolean): void {
+    exampleActive.value = false;
     rawInputs.enableShear = enabled;
   }
 
   function setDimensionMode(mode: DimensionMode): void {
+    exampleActive.value = false;
     dimensionMode.value = mode;
     if (mode === 'standard') {
       applyRecommendedKey();
@@ -125,8 +194,14 @@ export function useKeySimulation() {
   }
 
   function loadRawInputs(inputs: RawInputs): void {
+    exampleActive.value = false;
     dimensionMode.value = 'custom';
     Object.assign(rawInputs, defaultInputs(), inputs);
+  }
+
+  function loadTextbookExample(): void {
+    loadRawInputs(TEXTBOOK_EXAMPLE.inputs);
+    exampleActive.value = true;
   }
 
   return {
@@ -140,6 +215,9 @@ export function useKeySimulation() {
     displayResult,
     displayInputs,
     canvasResult,
+    torqueTrend,
+    lengthTrend,
+    exampleActive,
     status,
     recommendedKey,
     dimensionMode,
@@ -152,5 +230,6 @@ export function useKeySimulation() {
     setViewOption,
     applyRecommendedKey,
     loadRawInputs,
+    loadTextbookExample,
   };
 }
