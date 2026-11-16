@@ -4,6 +4,7 @@ import FormulaPanel from './components/FormulaPanel.vue';
 import MaterialPanel from './components/MaterialPanel.vue';
 import ParamPanel from './components/ParamPanel.vue';
 import ResultPanel from './components/ResultPanel.vue';
+import SimulationCanvas from './components/SimulationCanvas.vue';
 import StatusBadge from './components/StatusBadge.vue';
 
 const {
@@ -11,6 +12,7 @@ const {
   validationErrors,
   displayResult,
   displayInputs,
+  canvasResult,
   status,
   recommendedKey,
   dimensionMode,
@@ -66,17 +68,12 @@ const {
         </aside>
 
         <section class="visual-column" aria-label="工程视图">
-          <div class="panel canvas-placeholder">
-            <div class="panel-heading">
-              <div><span class="section-kicker">2D ENGINEERING VIEW</span><h2>双视图工程示意</h2></div>
-            </div>
-            <div class="placeholder-drawing" aria-hidden="true">
-              <span class="placeholder-ring"></span>
-              <span class="placeholder-key"></span>
-              <span class="placeholder-line"></span>
-            </div>
-            <p>参数与计算链路已就绪，Konva 双视图将在下一里程碑接入。</p>
-          </div>
+          <SimulationCanvas
+            :inputs="displayInputs"
+            :result="canvasResult"
+            :status="status"
+            :show-dimensions="showDimensions"
+          />
         </section>
       </div>
 
