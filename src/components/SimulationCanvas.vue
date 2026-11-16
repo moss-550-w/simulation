@@ -35,7 +35,8 @@ const canvasLabel = computed(() => {
   if (!props.inputs || !props.result) {
     return '平键双视图工程示意，暂无有效参数';
   }
-  return `平键横截面与纵剖面工程示意，${STATUS_META[props.status].conclusion}，工作长度 ${props.result.l.toFixed(2)} 毫米`;
+  const arrangement = props.inputs.keyCount === 2 ? '双键 180° 布置' : '单键布置';
+  return `平键横截面与纵剖面工程示意，${arrangement}，${STATUS_META[props.status].conclusion}，工作长度 ${props.result.l.toFixed(2)} 毫米`;
 });
 
 function calculateViews(width: number, height: number): ViewBox[] {
@@ -167,7 +168,7 @@ onBeforeUnmount(() => {
     <div class="panel-heading canvas-heading">
       <div>
         <span class="section-kicker">2D ENGINEERING VIEW</span>
-        <h2 id="canvas-title">双视图工程示意</h2>
+        <h2 id="canvas-title">双视图工程示意{{ inputs?.keyCount === 2 ? ' · 双键 180°' : '' }}</h2>
       </div>
       <div class="canvas-header-actions">
         <StatusBadge :status="status" compact />

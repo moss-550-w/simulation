@@ -1,5 +1,7 @@
 export type KeyType = 'A' | 'B' | 'C';
 
+export type KeyCount = 1 | 2;
+
 export type CheckStatus = 'safe' | 'warning' | 'fail' | 'noLoad' | 'invalid';
 
 export type NumericInputField =
@@ -15,7 +17,8 @@ export type NumericInputField =
   | 'sigmaPAxle'
   | 'sigmaPHub'
   | 'sigmaPKey'
-  | 'tauAllow';
+  | 'tauAllow'
+  | 'loadFactor';
 
 export interface RawInputs {
   d: string;
@@ -33,6 +36,8 @@ export interface RawInputs {
   sigmaPKey?: string;
   enableShear: boolean;
   tauAllow?: string;
+  keyCount?: KeyCount;
+  loadFactor?: string;
 }
 
 export interface NormalizedInputs {
@@ -51,6 +56,8 @@ export interface NormalizedInputs {
   sigmaPKey?: number;
   enableShear: boolean;
   tauAllow?: number;
+  keyCount?: KeyCount;
+  loadFactor?: number;
 }
 
 export type ValidationErrors = Partial<Record<NumericInputField, string>>;
@@ -70,6 +77,12 @@ export interface KeyResult {
   STau?: number | null;
   etaMax: number;
   status: CheckStatus;
+}
+
+export interface ConnectionResult extends KeyResult {
+  keyCount: KeyCount;
+  loadFactor: number;
+  torquePerKey: number;
 }
 
 export interface StandardKeySize {

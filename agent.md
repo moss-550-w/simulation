@@ -15,7 +15,7 @@
 - 本系统是**解析解校核工具**，不是有限元仿真软件。
 - 不得在 UI 中宣称“应力云图”“精确仿真”“有限元结果”。
 - 纵剖面允许示意比例，必须标注“纵向示意比例”。
-- 首版只做普通平键静连接；半圆键、楔键、双键为扩展，不得混入核心计算模块。
+- 首版只做普通平键静连接；半圆键、楔键仍不纳入。M5 双键 180° 布置必须位于独立扩展模块，不得改写单键核心公式。
 
 ---
 
@@ -45,7 +45,9 @@
 ```text
 src/
   domain/
-    calculation.ts      # 挤压、剪切、利用率、安全系数、状态判定（纯函数）
+    calculation.ts      # 单键挤压、剪切、利用率、安全系数、状态判定（纯函数）
+    doubleKey.ts        # M5 双键 180° 载荷分配扩展，复用单键纯函数
+    report.ts           # 可打印报告内容生成，不承载强度公式
     validation.ts       # 输入校验、几何约束
     normalize.ts        # 单位换算（N·m ↔ N·mm 等）
     standardKeys.ts     # GB/T 1096 教学简化推荐表
@@ -98,6 +100,8 @@ interface RawInputs {
   sigmaPKey?: string;
   enableShear: boolean;
   tauAllow?: string;
+  keyCount?: 1 | 2;     // M5，缺省为 1，兼容首版 JSON
+  loadFactor?: string;  // 双键载荷分配系数 φ，默认 1.5
 }
 
 interface NormalizedInputs {
@@ -107,6 +111,7 @@ interface NormalizedInputs {
   T: number;            // 内部单位 N·mm
   sigmaPAxle: number; sigmaPHub: number; sigmaPKey?: number;
   enableShear: boolean; tauAllow?: number;
+  keyCount?: 1 | 2; loadFactor?: number;
 }
 ```
 
@@ -174,6 +179,19 @@ etaMax = enableShear ? max(etaP, etaTau) : etaP
 
 校验失败项返回字段级错误，供 UI 定位输入框。
 
+### 4.7 M5 双键 180° 布置扩展
+
+双键计算只能由 `doubleKey.ts` 调用既有单键函数，不得修改 `calculation.ts` 的单键公式与状态阈值。
+
+```text
+φ = loadFactor，默认 1.5，允许范围 1 ≤ φ ≤ 2
+Ti = T / φ              // 每个键承担的转矩
+sigmaP,double = 2Ti / (d * hk * l) = sigmaP,single / φ
+tau,double = 2Ti / (d * b * l) = tau,single / φ
+```
+
+`φ=1` 表示不计双键承载增益，`φ=2` 表示理想均载；默认 `1.5` 表示双键合计承载能力按单键的 1.5 倍估计。界面和报告必须展示该教学简化假设，结果应力为单键应力，不得表述为有限元或精确载荷分布。首版无 `keyCount/loadFactor` 的 JSON 按单键恢复。
+
 ---
 
 ## 5. 状态与数据流
@@ -203,7 +221,7 @@ rawInputs
 
 ### 6.1 双视图
 
-- **横截面**：轴圆、轮毂外圆、键、轴槽、轮毂槽；等比例；标注 `d`、`D`、`b`、`h`、`t1`、`t2`。
+- **横截面**：轴圆、轮毂外圆、键、轴槽、轮毂槽；等比例；标注 `d`、`D`、`b`、`h`、`t1`、`t2`。M5 双键模式下第二键及对应槽、接触面按 180° 对称绘制。
 - **纵剖面**：显示 `L`、`l`、`Bh`；水平可按长度比例，垂直可放大，必须标注“纵向示意比例”。
 
 ### 6.2 图层顺序
@@ -248,6 +266,7 @@ background → hub → shaft → key → contact → force → dimensions → in
 - 参数敏感性提示；
 - 教材例题预设与标准答案对比；
 - 截图导出、JSON 参数保存/恢复。
+- M5 可打印报告必须复用当前有效参数、同一计算结果和画布截图，包含公式代入与双键假设，可由浏览器打印或另存 PDF。
 
 ---
 

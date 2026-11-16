@@ -18,16 +18,21 @@ export function drawShaft(
   });
   shaft.setAttr('hint', `轴：直径 d = ${cross.input.d} mm`);
   layer.add(shaft);
-  layer.add(new Konva.Rect({
+  const slotHeight = Math.max(1, cross.keyBottom - cross.shaftTop + 0.5);
+  const createSlot = (y: number): Konva.Rect => new Konva.Rect({
     x: cross.keyLeft,
-    y: cross.shaftTop - 0.5,
+    y,
     width: cross.keyWidth,
-    height: Math.max(1, cross.keyBottom - cross.shaftTop + 0.5),
+    height: slotHeight,
     fill: '#f9fbfc',
     stroke: '#567786',
     strokeWidth: 1,
     listening: false,
-  }));
+  });
+  layer.add(createSlot(cross.shaftTop - 0.5));
+  if (cross.input.keyCount === 2) {
+    layer.add(createSlot(2 * cross.cy - cross.keyBottom));
+  }
   layer.add(new Konva.Line({
     points: [cross.cx - cross.shaftRadius - 10, cross.cy, cross.cx + cross.shaftRadius + 10, cross.cy],
     stroke: '#8ca1ac', strokeWidth: 0.8, dash: [10, 3, 2, 3], listening: false,

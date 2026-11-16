@@ -56,6 +56,28 @@ export function drawKey(
   });
   crossKey.setAttr('hint', `${getKeyTypeName(cross.input.type)}：b = ${cross.input.b} mm，h = ${cross.input.h} mm`);
   layer.add(crossKey);
+  if (cross.input.keyCount === 2) {
+    const secondKey = new Konva.Rect({
+      x: cross.keyLeft,
+      y: 2 * cross.cy - cross.keyTop - cross.keyHeight,
+      width: cross.keyWidth,
+      height: cross.keyHeight,
+      fill: color,
+      stroke: '#294b5b',
+      strokeWidth: 1.4,
+      opacity: 0.9,
+    });
+    secondKey.setAttr('hint', '第二键：与上方键呈 180° 布置，按相同单键平均应力校核');
+    layer.add(secondKey);
+    layer.add(new Konva.Text({
+      x: cross.keyRight + 8,
+      y: 2 * cross.cy - cross.keyTop - cross.keyHeight / 2 - 6,
+      text: '180°',
+      fontSize: 9,
+      fill: '#355b6c',
+      listening: false,
+    }));
+  }
 
   const longitudinalKey = createLongitudinalKey(longitudinal, color);
   longitudinalKey.setAttr('hint', `${getKeyTypeName(cross.input.type)}，工作长度 l = ${longitudinal.result.l.toFixed(2)} mm`);
@@ -65,7 +87,7 @@ export function drawKey(
     y: longitudinal.keyTop - 19,
     width: longitudinal.keyRight - longitudinal.keyLeft,
     align: 'center',
-    text: `${cross.input.type} 型普通平键`,
+    text: `${cross.input.type} 型普通平键${cross.input.keyCount === 2 ? '（双键之一）' : ''}`,
     fontSize: 10,
     fontStyle: 'bold',
     fill: '#355b6c',

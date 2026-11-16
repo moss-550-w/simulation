@@ -10,16 +10,22 @@ export function drawContact(
   longitudinal: LongitudinalSectionModel,
 ): void {
   layer.destroyChildren();
-  const contactTop = cross.keyTop;
-  const contactBottom = cross.shaftTop;
-  [cross.keyLeft, cross.keyRight].forEach((x) => {
-    layer.add(new Konva.Line({
-      points: [x, contactTop, x, contactBottom],
-      stroke: CONTACT_COLOR,
-      strokeWidth: 4,
-      opacity: 0.9,
-      listening: false,
-    }));
+  const contactPairs = [
+    { top: cross.keyTop, bottom: cross.shaftTop },
+    ...(cross.input.keyCount === 2
+      ? [{ top: 2 * cross.cy - cross.shaftTop, bottom: 2 * cross.cy - cross.keyTop }]
+      : []),
+  ];
+  contactPairs.forEach(({ top, bottom }) => {
+    [cross.keyLeft, cross.keyRight].forEach((x) => {
+      layer.add(new Konva.Line({
+        points: [x, top, x, bottom],
+        stroke: CONTACT_COLOR,
+        strokeWidth: 4,
+        opacity: 0.9,
+        listening: false,
+      }));
+    });
   });
 
   [longitudinal.keyTop, longitudinal.keyBottom].forEach((y) => {

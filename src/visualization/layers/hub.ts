@@ -14,9 +14,13 @@ export function drawHub(
     `A ${radius} ${radius} 0 1 0 ${cross.cx - radius} ${cross.cy}`,
     'Z',
   ].join(' ');
-  const slotPath = `M ${cross.keyLeft - 1} ${cross.hubSlotTop} H ${cross.keyRight + 1} V ${cross.shaftTop + 1} H ${cross.keyLeft - 1} Z`;
+  const slotPath = (top: number, bottom: number): string =>
+    `M ${cross.keyLeft - 1} ${top} H ${cross.keyRight + 1} V ${bottom} H ${cross.keyLeft - 1} Z`;
+  const secondSlotPath = cross.input.keyCount === 2
+    ? slotPath(2 * cross.cy - cross.shaftTop - 1, 2 * cross.cy - cross.hubSlotTop)
+    : '';
   const ring = new Konva.Path({
-    data: `${circlePath(cross.hubRadius)} ${circlePath(cross.shaftRadius)} ${slotPath}`,
+    data: `${circlePath(cross.hubRadius)} ${circlePath(cross.shaftRadius)} ${slotPath(cross.hubSlotTop, cross.shaftTop + 1)} ${secondSlotPath}`,
     fill: '#e7edf0',
     fillRule: 'evenodd',
     stroke: '#607d8b',

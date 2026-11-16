@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { STATUS_META } from '../domain/calculation';
-import { formatNumber } from '../domain/normalize';
-import type { CheckStatus, KeyResult, ValidationErrors } from '../domain/types';
+import { formatNumber, newtonMillimeterToNewtonMeter } from '../domain/normalize';
+import type { CheckStatus, ConnectionResult, ValidationErrors } from '../domain/types';
 import StatusBadge from './StatusBadge.vue';
 
 const props = defineProps<{
-  result: KeyResult | null;
+  result: ConnectionResult | null;
   status: CheckStatus;
   errors: ValidationErrors;
 }>();
@@ -44,6 +44,11 @@ const utilizationWidth = computed(() =>
     </div>
 
     <template v-if="result">
+      <div v-if="result.keyCount === 2" class="double-key-summary">
+        <strong>双键 180° · 单键结果</strong>
+        <span>Ti = T/φ = {{ formatNumber(newtonMillimeterToNewtonMeter(result.torquePerKey)) }} N·m，φ = {{ formatNumber(result.loadFactor) }}</span>
+        <small>默认合计 1.5 倍单键承载的教学简化模型；当前显示每个键的平均应力。</small>
+      </div>
       <div class="utilization-block" :style="{ '--status-color': STATUS_META[status].color }">
         <div class="utilization-label">
           <span>综合利用率 ηmax</span>

@@ -15,6 +15,7 @@ const FIELD_LABELS: Record<NumericInputField, string> = {
   sigmaPHub: '轮毂许用挤压应力',
   sigmaPKey: '键许用挤压应力',
   tauAllow: '键许用剪切应力',
+  loadFactor: '双键载荷分配系数 φ',
 };
 
 export function validateInputs(raw: RawInputs): ValidationErrors {
@@ -62,8 +63,12 @@ export function validateInputs(raw: RawInputs): ValidationErrors {
   validateNumber('sigmaPHub');
   validateNumber('sigmaPKey', { optional: true });
   validateNumber('tauAllow', { optional: !raw.enableShear });
+  validateNumber('loadFactor', { optional: raw.keyCount !== 2 });
 
-  const { d, b, h, L, D, Bh, t1, t2 } = values;
+  const { d, b, h, L, D, Bh, t1, t2, loadFactor } = values;
+  if (raw.keyCount === 2 && loadFactor !== undefined && (loadFactor < 1 || loadFactor > 2)) {
+    errors.loadFactor = '双键载荷分配系数 φ 须在 1–2 之间';
+  }
   if (d !== undefined && b !== undefined && h !== undefined && L !== undefined
     && d > 0 && b > 0 && h > 0 && L > 0) {
     if (raw.type === 'A' && L <= b) {

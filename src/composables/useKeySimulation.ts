@@ -1,5 +1,5 @@
 import { computed, reactive, ref, watch } from 'vue';
-import { calculateKeyStrength } from '../domain/calculation';
+import { calculateConnectionStrength } from '../domain/doubleKey';
 import { TEXTBOOK_EXAMPLE } from '../domain/examples';
 import { parseInputPayload, serializeInputPayload } from '../domain/inputTransfer';
 import { getWorkingLength } from '../domain/keyTypes';
@@ -13,7 +13,8 @@ import { findStandardKey } from '../domain/standardKeys';
 import { hasValidationErrors, validateInputs } from '../domain/validation';
 import type {
   CheckStatus,
-  KeyResult,
+  ConnectionResult,
+  KeyCount,
   KeyType,
   NormalizedInputs,
   NumericInputField,
@@ -40,6 +41,8 @@ export const DEFAULT_RAW_INPUTS: Readonly<RawInputs> = {
   sigmaPKey: '',
   enableShear: true,
   tauAllow: '60',
+  keyCount: 1,
+  loadFactor: '1.5',
 };
 
 const STORAGE_KEY = 'key-strength-checker:inputs:v1';
@@ -73,7 +76,7 @@ function sampleTorqueTrend(input: NormalizedInputs): TrendPoint[] {
   return Array.from({ length: TREND_SAMPLE_COUNT + 1 }, (_, index) => {
     const torque = maximum * index / TREND_SAMPLE_COUNT;
     const sample = { ...input, T: newtonMeterToNewtonMillimeter(torque) };
-    return { x: torque, y: calculateKeyStrength(sample).sigmaP };
+    return { x: torque, y: calculateConnectionStrength(sample).sigmaP };
   });
 }
 
@@ -88,7 +91,7 @@ function sampleLengthTrend(input: NormalizedInputs): TrendPoint[] {
       continue;
     }
     const sample = { ...input, L: length };
-    points.push({ x: length, y: calculateKeyStrength(sample).sigmaP });
+    points.push({ x: length, y: calculateConnectionStrength(sample).sigmaP });
   }
   return points;
 }
@@ -105,11 +108,11 @@ export function useKeySimulation() {
   const normalizedInputs = computed<NormalizedInputs | null>(() =>
     isValid.value ? normalizeInputs(rawInputs) : null,
   );
-  const calculatedResult = computed<KeyResult | null>(() =>
-    normalizedInputs.value ? calculateKeyStrength(normalizedInputs.value) : null,
+  const calculatedResult = computed<ConnectionResult | null>(() =>
+    normalizedInputs.value ? calculateConnectionStrength(normalizedInputs.value) : null,
   );
 
-  const lastValidResult = ref<KeyResult | null>(null);
+  const lastValidResult = ref<ConnectionResult | null>(null);
   const lastValidInputs = ref<NormalizedInputs | null>(null);
   watch(calculatedResult, (result) => {
     if (result && normalizedInputs.value) {
@@ -126,7 +129,7 @@ export function useKeySimulation() {
   const status = computed<CheckStatus>(() =>
     isValid.value ? calculatedResult.value?.status ?? 'invalid' : 'invalid',
   );
-  const displayResult = computed<KeyResult | null>(() => {
+  const displayResult = computed<ConnectionResult | null>(() => {
     if (calculatedResult.value) {
       return calculatedResult.value;
     }
@@ -175,6 +178,14 @@ export function useKeySimulation() {
   function setEnableShear(enabled: boolean): void {
     exampleActive.value = false;
     rawInputs.enableShear = enabled;
+  }
+
+  function setKeyCount(keyCount: KeyCount): void {
+    exampleActive.value = false;
+    rawInputs.keyCount = keyCount;
+    if (keyCount === 2 && !rawInputs.loadFactor) {
+      rawInputs.loadFactor = '1.5';
+    }
   }
 
   function setDimensionMode(mode: DimensionMode): void {
@@ -226,6 +237,7 @@ export function useKeySimulation() {
     updateNumericField,
     setKeyType,
     setEnableShear,
+    setKeyCount,
     setDimensionMode,
     setViewOption,
     applyRecommendedKey,

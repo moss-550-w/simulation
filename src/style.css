@@ -262,6 +262,7 @@ input:disabled {
 .text-button { padding: 5px 8px; color: var(--accent); border: 1px solid #87b5c0; background: #fff; font-size: 11px; }
 .source-note, .inline-hint { margin: 7px 0 12px; color: #82909c; font-size: 10px; line-height: 1.6; }
 .inline-hint { padding: 7px 9px; background: #f5f7f9; }
+.double-key-assumption { margin: 10px 0 13px; padding: 9px 10px; color: #526d7c; background: #edf5f7; border-left: 3px solid #4b8da0; font-size: 10px; line-height: 1.65; }
 
 .field-grid,
 .material-fields {
@@ -380,6 +381,10 @@ input:disabled {
 .safe-threshold { left: 66.666%; }
 .fail-threshold { left: 83.333%; }
 .utilization-scale { display: flex; justify-content: space-between; margin-top: 6px; color: #8c98a1; font: 9px Consolas, monospace; }
+.double-key-summary { margin: 15px 18px 0; padding: 11px 13px; display: grid; gap: 5px; color: #315c6e; background: #edf5f7; border: 1px solid #c9dde3; }
+.double-key-summary strong { font-size: 12px; }
+.double-key-summary span { font: 12px Consolas, "Microsoft YaHei", monospace; }
+.double-key-summary small { color: #6a7f8a; font-size: 10px; line-height: 1.5; }
 .result-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #e3e8ec; border-left: 1px solid #e3e8ec; margin: 0 18px; }
 .result-item { min-height: 85px; padding: 13px 15px; display: flex; flex-direction: column; justify-content: center; gap: 7px; border-right: 1px solid #e3e8ec; border-bottom: 1px solid #e3e8ec; }
 .result-item > span { color: #6a7a87; font-size: 10px; }

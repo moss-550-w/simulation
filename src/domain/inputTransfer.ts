@@ -23,9 +23,17 @@ export function parseRawInputsValue(value: unknown): RawInputs | null {
   if (typeof value.enableShear !== 'boolean') {
     return null;
   }
+  if (value.keyCount !== undefined && value.keyCount !== 1 && value.keyCount !== 2) {
+    return null;
+  }
+  if (value.loadFactor !== undefined && typeof value.loadFactor !== 'string') {
+    return null;
+  }
   const values: Partial<RawInputs> = {
     type: value.type as RawInputs['type'],
     enableShear: value.enableShear,
+    ...(value.keyCount === undefined ? {} : { keyCount: value.keyCount }),
+    ...(value.loadFactor === undefined ? {} : { loadFactor: value.loadFactor }),
   };
   for (const field of REQUIRED_FIELDS) {
     if (typeof value[field] !== 'string') {

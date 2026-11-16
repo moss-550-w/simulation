@@ -63,20 +63,23 @@ export function drawForce(
   addTorqueArrow(layer, cross);
   const y = Math.max(cross.keyTop, cross.hubSlotTop) + Math.max(4, (cross.shaftTop - cross.keyTop) / 2);
   const opacity = cross.input.T === 0 ? 0.3 : 0.95;
-  layer.add(new Konva.Arrow({
-    points: [cross.keyLeft - 32, y, cross.keyLeft - 4, y],
-    stroke: FORCE_COLOR, fill: FORCE_COLOR, strokeWidth: 1.7, pointerLength: 7, pointerWidth: 7, opacity, listening: false,
-  }));
-  layer.add(new Konva.Arrow({
-    points: [cross.keyRight + 32, y, cross.keyRight + 4, y],
-    stroke: FORCE_COLOR, fill: FORCE_COLOR, strokeWidth: 1.7, pointerLength: 7, pointerWidth: 7, opacity, listening: false,
-  }));
-  layer.add(new Konva.Text({
-    x: cross.keyLeft - 49, y: y - 16, text: 'F', fontFamily: 'Georgia', fontSize: 13, fill: FORCE_COLOR, opacity, listening: false,
-  }));
-  layer.add(new Konva.Text({
-    x: cross.keyRight + 39, y: y - 16, text: 'F', fontFamily: 'Georgia', fontSize: 13, fill: FORCE_COLOR, opacity, listening: false,
-  }));
+  const forceYValues = cross.input.keyCount === 2 ? [y, 2 * cross.cy - y] : [y];
+  forceYValues.forEach((forceY) => {
+    layer.add(new Konva.Arrow({
+      points: [cross.keyLeft - 32, forceY, cross.keyLeft - 4, forceY],
+      stroke: FORCE_COLOR, fill: FORCE_COLOR, strokeWidth: 1.7, pointerLength: 7, pointerWidth: 7, opacity, listening: false,
+    }));
+    layer.add(new Konva.Arrow({
+      points: [cross.keyRight + 32, forceY, cross.keyRight + 4, forceY],
+      stroke: FORCE_COLOR, fill: FORCE_COLOR, strokeWidth: 1.7, pointerLength: 7, pointerWidth: 7, opacity, listening: false,
+    }));
+    layer.add(new Konva.Text({
+      x: cross.keyLeft - 49, y: forceY - 16, text: 'F', fontFamily: 'Georgia', fontSize: 13, fill: FORCE_COLOR, opacity, listening: false,
+    }));
+    layer.add(new Konva.Text({
+      x: cross.keyRight + 39, y: forceY - 16, text: 'F', fontFamily: 'Georgia', fontSize: 13, fill: FORCE_COLOR, opacity, listening: false,
+    }));
+  });
 
   if (cross.input.T > 0) {
     layer.add(new Konva.Arrow({

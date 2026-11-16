@@ -93,6 +93,19 @@ describe('输入校验', () => {
     expect(hasValidationErrors({})).toBe(false);
     expect(hasValidationErrors(validateInputs(validRaw({ d: '' })))).toBe(true);
   });
+
+  it('双键载荷分配系数必填且限制在 1–2', () => {
+    expect(validateInputs(validRaw({ keyCount: 2, loadFactor: '' })).loadFactor).toContain('请填写');
+    expect(validateInputs(validRaw({ keyCount: 2, loadFactor: '0.9' })).loadFactor).toContain('1–2');
+    expect(validateInputs(validRaw({ keyCount: 2, loadFactor: '2.1' })).loadFactor).toContain('1–2');
+    expect(validateInputs(validRaw({ keyCount: 2, loadFactor: '1' }))).toEqual({});
+    expect(validateInputs(validRaw({ keyCount: 2, loadFactor: '2' }))).toEqual({});
+  });
+
+  it('单键模式忽略缺省的双键载荷分配系数', () => {
+    expect(validateInputs(validRaw({ keyCount: 1, loadFactor: '' }))).toEqual({});
+    expect(validateInputs(validRaw())).toEqual({});
+  });
 });
 
 describe('JSON 参数恢复校验', () => {
@@ -115,5 +128,23 @@ describe('JSON 参数恢复校验', () => {
     const missing = validRaw() as Partial<RawInputs>;
     delete missing.L;
     expect(parseRawInputsValue(missing)).toBeNull();
+  });
+
+  it('双键参数可往返恢复，旧版单键参数保持兼容', () => {
+    const doubleInputs = validRaw({ keyCount: 2, loadFactor: '1.75' });
+    expect(parseInputPayload(serializeInputPayload(doubleInputs))).toEqual({ success: true, inputs: doubleInputs });
+    const legacy = parseInputPayload(serializeInputPayload(validRaw()));
+    expect(legacy.success).toBe(true);
+    if (legacy.success) {
+      expect(legacy.inputs.keyCount).toBeUndefined();
+      expect(legacy.inputs.loadFactor).toBeUndefined();
+    }
+  });
+
+  it('拒绝非法双键字段和越界载荷分配系数', () => {
+    expect(parseRawInputsValue({ ...validRaw(), keyCount: 3, loadFactor: '1.5' })).toBeNull();
+    expect(parseRawInputsValue({ ...validRaw(), keyCount: '2', loadFactor: '1.5' })).toBeNull();
+    expect(parseRawInputsValue({ ...validRaw(), keyCount: 2, loadFactor: 1.5 })).toBeNull();
+    expect(parseRawInputsValue({ ...validRaw(), keyCount: 2, loadFactor: '2.5' })).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DimensionMode, ViewOption } from '../composables/useKeySimulation';
 import type {
+  KeyCount,
   KeyType,
   NumericInputField,
   RawInputs,
@@ -28,6 +29,7 @@ const emit = defineEmits<{
   updateField: [field: NumericInputField, value: string];
   updateType: [type: KeyType];
   updateShear: [enabled: boolean];
+  updateKeyCount: [keyCount: KeyCount];
   updateMode: [mode: DimensionMode];
   updateOption: [option: ViewOption, value: boolean];
   applyRecommendation: [];
@@ -50,6 +52,10 @@ function updateField(field: NumericInputField, event: Event): void {
 
 function updateType(event: Event): void {
   emit('updateType', (event.target as HTMLSelectElement).value as KeyType);
+}
+
+function updateKeyCount(event: Event): void {
+  emit('updateKeyCount', Number((event.target as HTMLSelectElement).value) as KeyCount);
 }
 </script>
 
@@ -74,6 +80,38 @@ function updateType(event: Event): void {
             <option value="C">C 型单圆头（l = L − b/2）</option>
           </select>
         </label>
+
+        <label class="field full-field">
+          <span class="field-label">键布置</span>
+          <select :value="inputs.keyCount ?? 1" aria-label="键布置数量" @change="updateKeyCount">
+            <option :value="1">单键</option>
+            <option :value="2">双键 180° 布置</option>
+          </select>
+        </label>
+
+        <template v-if="inputs.keyCount === 2">
+          <label class="field full-field" :class="{ 'has-error': errors.loadFactor }">
+            <span class="field-label">载荷分配系数 φ</span>
+            <span class="input-with-unit">
+              <input
+                :value="inputs.loadFactor ?? '1.5'"
+                type="number"
+                inputmode="decimal"
+                min="1"
+                max="2"
+                step="0.05"
+                :aria-invalid="Boolean(errors.loadFactor)"
+                aria-label="双键载荷分配系数 φ"
+                @input="updateField('loadFactor', $event)"
+              />
+              <span>1–2</span>
+            </span>
+            <small v-if="errors.loadFactor" class="field-error">{{ errors.loadFactor }}</small>
+          </label>
+          <p class="double-key-assumption">
+            每键按 Ti = T/φ 承载。默认 φ=1.5 表示双键合计承载能力按单键的 1.5 倍估计；φ=2 为理想均载。结果为单键平均应力，属于教学简化假设。
+          </p>
+        </template>
 
         <div class="mode-switch" aria-label="尺寸输入模式">
           <button

@@ -9,12 +9,15 @@ import SimulationCanvas from './components/SimulationCanvas.vue';
 import StatusBadge from './components/StatusBadge.vue';
 import TeachingPanel from './components/TeachingPanel.vue';
 import { parseInputPayload, serializeInputPayload } from './domain/inputTransfer';
+import { buildPrintableReport } from './domain/report';
 
 const {
   rawInputs,
   validationErrors,
   displayResult,
   displayInputs,
+  normalizedInputs,
+  calculatedResult,
   canvasResult,
   torqueTrend,
   lengthTrend,
@@ -27,6 +30,7 @@ const {
   updateNumericField,
   setKeyType,
   setEnableShear,
+  setKeyCount,
   setDimensionMode,
   setViewOption,
   applyRecommendedKey,
@@ -53,6 +57,29 @@ function exportCanvas(): void {
   }
   downloadLink(dataUrl, '平键双视图工程示意.png');
   notice.value = { type: 'success', text: '画布 PNG 已导出。' };
+}
+
+function exportReport(): void {
+  const inputs = normalizedInputs.value;
+  const result = calculatedResult.value;
+  if (!inputs || !result) {
+    notice.value = { type: 'error', text: '请先修正输入参数，再导出当前有效校核报告。' };
+    return;
+  }
+  const imageDataUrl = canvasRef.value?.exportPng();
+  if (!imageDataUrl) {
+    notice.value = { type: 'error', text: '当前没有可加入报告的有效画布截图。' };
+    return;
+  }
+  const report = buildPrintableReport({
+    inputs,
+    result,
+    imageDataUrl,
+    generatedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+  });
+  document.open();
+  document.write(report);
+  document.close();
 }
 
 function exportInputs(): void {
@@ -105,6 +132,7 @@ async function importInputs(event: Event): Promise<void> {
         <StatusBadge :status="status" compact />
         <div class="export-actions" aria-label="导出与恢复">
           <button type="button" @click="exportCanvas">导出 PNG</button>
+          <button type="button" @click="exportReport">导出报告</button>
           <button type="button" @click="exportInputs">保存 JSON</button>
           <button type="button" @click="fileInput?.click()">恢复 JSON</button>
           <input ref="fileInput" class="visually-hidden-file" type="file" accept=".json,application/json" tabindex="-1" aria-label="选择参数 JSON 文件" @change="importInputs" />
@@ -130,6 +158,7 @@ async function importInputs(event: Event): Promise<void> {
             @update-field="updateNumericField"
             @update-type="setKeyType"
             @update-shear="setEnableShear"
+            @update-key-count="setKeyCount"
             @update-mode="setDimensionMode"
             @update-option="setViewOption"
             @apply-recommendation="applyRecommendedKey"

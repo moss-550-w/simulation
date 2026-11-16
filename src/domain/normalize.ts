@@ -42,5 +42,7 @@ export function normalizeInputs(raw: RawInputs): NormalizedInputs {
     ...(sigmaPKey === null ? {} : { sigmaPKey }),
     enableShear: raw.enableShear,
     ...(raw.enableShear && tauAllow !== null ? { tauAllow } : {}),
+    keyCount: raw.keyCount ?? 1,
+    loadFactor: parseFiniteNumber(raw.loadFactor) ?? 1.5,
   };
 }
